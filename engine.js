@@ -48,6 +48,7 @@
     var H = {};
     (have || []).forEach(function (x) { H[x] = 1; });
     // Cooked rice can always be made from rice
+    var riceOnly = H.rice && !H['cooked rice'];
     if (H.rice) H['cooked rice'] = 1;
     var out = { now: [], one: [], two: [] };
     DISHES.forEach(function (d, i) {
@@ -55,17 +56,17 @@
       if (opts.maxMins && d.mins > opts.maxMins) return;
       var missing = d.needs.filter(function (x) { return !H[x]; });
       if (missing.length > 2) return;
-      var using = d.needs.concat(d.opt).filter(function (x) { return H[x]; });
+      var using = d.needs.concat(d.opt).filter(function (x) { return H[x]; })
+        .map(function (x) { return riceOnly && x === 'cooked rice' ? 'rice' : x; });
       // Nothing you ticked is in it: not a suggestion, just a dish
       if (!d.needs.some(function (x) { return H[x]; })) return;
       var item = { id: i, dish: d, missing: missing, using: using, diet: diet(d),
         jainSkip: opts.diet === 'jain' ? d.opt.filter(function (x) { return JAIN_NO[x]; }) : [] };
       (missing.length === 0 ? out.now : missing.length === 1 ? out.one : out.two).push(item);
     });
-    var byUse = function (a, b) {
-      return (b.using.length / (b.dish.needs.length + b.dish.opt.length)) - (a.using.length / (a.dish.needs.length + a.dish.opt.length)) ||
-        a.dish.mins - b.dish.mins || a.dish.name.localeCompare(b.dish.name);
-    };
+    // Dishes that use more of what you have come first; a one-ingredient dish shouldn't top the list.
+    var score = function (m) { return m.using.length + m.using.length / (m.dish.needs.length + m.dish.opt.length); };
+    var byUse = function (a, b) { return score(b) - score(a) || a.dish.mins - b.dish.mins || a.dish.name.localeCompare(b.dish.name); };
     out.now.sort(byUse); out.one.sort(byUse); out.two.sort(byUse);
     // What one extra item would unlock the most dishes
     var unlock = {};
