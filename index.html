@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>fridgecook</title>
+<meta name="description" content="Tick what's in your kitchen and see what you can cook right now, or with just one more thing from the shop. About a hundred Indian and everyday dishes.">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<style>
+@font-face {
+  font-family: "Pixelify Sans";
+  src: url("assets/PixelifySans.ttf") format("truetype");
+  font-weight: 400 700;
+  font-display: swap;
+}
+/* Cozy pixel paper */
+:root {
+  --ink: #3b2f2a;
+  --muted: #7a6a5f;
+  --paper: #fbf5e9;
+  --paper-2: #f4ead6;
+  --line: #e6d7bc;
+  --desk: #eadcc2;
+  --desk-dot: #dfcfb1;
+  --accent: #c8553d;
+  --accent-dark: #9e3f2c;
+  --sage: #5f8463;
+  --sage-soft: #dfe9d9;
+  --pixel: "Pixelify Sans", "Courier New", monospace;
+  --body: "Trebuchet MS", Verdana, "Segoe UI", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  font: 17px/1.55 var(--body);
+  color: var(--ink);
+  background-color: var(--desk);
+  background-image: radial-gradient(var(--desk-dot) 1px, transparent 1.2px);
+  background-size: 8px 8px;
+  min-height: 100vh;
+}
+button, input { font: inherit; color: inherit; }
+:focus-visible { outline: 3px dashed var(--accent); outline-offset: 3px; }
+.px { clip-path: polygon(0 6px, 3px 6px, 3px 3px, 6px 3px, 6px 0, calc(100% - 6px) 0, calc(100% - 6px) 3px, calc(100% - 3px) 3px, calc(100% - 3px) 6px, 100% 6px,
+  100% calc(100% - 6px), calc(100% - 3px) calc(100% - 6px), calc(100% - 3px) calc(100% - 3px), calc(100% - 6px) calc(100% - 3px), calc(100% - 6px) 100%,
+  6px 100%, 6px calc(100% - 3px), 3px calc(100% - 3px), 3px calc(100% - 6px), 0 calc(100% - 6px)); }
+.lift { filter: drop-shadow(4px 4px 0 var(--ink)); margin-bottom: 26px; }
+
+header { max-width: 900px; margin: 0 auto; padding: 18px 16px 0; display: flex; align-items: center; gap: 12px; }
+header .logo { display: flex; align-items: center; gap: 10px; font: 700 20px var(--pixel); }
+header .logo svg { width: 26px; height: 26px; }
+header .spacer { flex: 1; }
+.link { background: none; border: 0; padding: 4px 8px; cursor: pointer; font-size: 15px; color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+.link:hover { color: var(--accent); }
+
+main { max-width: 900px; margin: 0 auto; padding: 22px 16px 10px; }
+.sheet { background: var(--ink); padding: 3px; }
+.sheet > .inner { background: var(--paper); padding: 26px 30px 28px; }
+h1 { font: 700 34px/1.1 var(--pixel); margin: 0 0 8px; }
+h2 { font: 700 22px/1.2 var(--pixel); margin: 0 0 12px; }
+.lede { margin: 0 0 18px; color: var(--muted); }
+
+.tools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 16px; }
+.search { flex: 1 1 220px; border: 3px solid var(--ink); background: var(--paper-2); padding: 7px 12px; min-width: 0; }
+.search:focus { outline: none; border-color: var(--accent); }
+.count { font-size: 15px; color: var(--muted); }
+
+.shelf { margin: 0 0 14px; }
+.shelf h3 { font: 700 15px var(--pixel); letter-spacing: .5px; margin: 0 0 8px; color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.chip { border: 2px solid var(--ink); background: var(--paper); padding: 3px 11px; cursor: pointer; font-size: 15px; border-radius: 0; }
+.chip:hover { background: var(--paper-2); }
+.chip[aria-pressed=true] { background: var(--sage); border-color: var(--sage); color: #fff; font-weight: 700; }
+.chip[hidden] { display: none; }
+
+.filters { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 24px; margin-top: 18px; }
+.lab { display: block; font-weight: 700; margin-bottom: 8px; font-size: 15px; }
+.seg { display: flex; border: 3px solid var(--ink); background: var(--paper); }
+.seg button { flex: 1; border: 0; border-left: 2px solid var(--ink); background: none; padding: 6px 4px; cursor: pointer; font-size: 14px; }
+.seg button:first-child { border-left: 0; }
+.seg button:hover { background: var(--paper-2); }
+.seg button[aria-pressed=true] { background: var(--ink); color: var(--paper); font-weight: 700; }
+.assumed { font-size: 14px; color: var(--muted); margin: 14px 0 0; }
+
+.btn { border: 0; padding: 3px; background: var(--ink); cursor: pointer; }
+.btn span { display: block; background: var(--paper); color: var(--ink); padding: 6px 16px; font-weight: 700; font-size: 15px; }
+.btn:hover span { background: var(--paper-2); }
+
+/* Results */
+.empty { color: var(--muted); margin: 0; }
+.buy { background: var(--sage-soft); border-left: 4px solid var(--sage); padding: 8px 12px; margin: 0 0 18px; font-size: 15px; }
+.buy:empty { display: none; }
+.band { margin: 0 0 22px; }
+.band h3 { font: 700 18px var(--pixel); margin: 0 0 10px; display: flex; align-items: baseline; gap: 10px; }
+.band h3 small { font: 400 14px var(--body); color: var(--muted); }
+.band[hidden] { display: none; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.card { text-align: left; border: 0; padding: 3px; background: var(--ink); cursor: pointer; }
+.card > span { display: block; background: var(--paper); padding: 11px 13px 12px; height: 100%; }
+.card:hover > span { background: var(--paper-2); }
+.card .nm { display: block; font-weight: 700; font-size: 17px; line-height: 1.3; margin-bottom: 4px; }
+.card .meta { display: flex; flex-wrap: wrap; gap: 6px; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+.tag { border: 1px solid var(--muted); padding: 0 6px; }
+.tag.nonveg { border-color: var(--accent); color: var(--accent-dark); }
+.tag.veg { border-color: var(--sage); color: var(--sage); }
+.tag.egg { border-color: #b58a2a; color: #8a6514; }
+.card .miss { display: block; font-size: 14px; color: var(--accent-dark); font-weight: 700; }
+.card .use { display: block; font-size: 13px; color: var(--muted); }
+.more { margin-top: 10px; }
+
+/* Recipe dialog */
+dialog { padding: 0; border: 0; background: var(--ink); max-width: 560px; width: calc(100% - 28px); max-height: calc(100vh - 40px); }
+dialog::backdrop { background: rgba(59,47,42,.3); }
+dialog .inner { background: var(--paper); margin: 3px; padding: 22px 24px 20px; max-height: calc(100vh - 46px); overflow-y: auto; }
+dialog h2 { margin-bottom: 6px; }
+dialog .meta { font-size: 14px; color: var(--muted); margin: 0 0 14px; }
+.ing { list-style: none; padding: 0; margin: 0 0 16px; columns: 2; column-gap: 20px; }
+.ing li { padding: 2px 0; break-inside: avoid; font-size: 15px; }
+.ing .ok::before { content: "[x] "; font-family: var(--pixel); color: var(--sage); }
+.ing .no::before { content: "[ ] "; font-family: var(--pixel); color: var(--accent); }
+.ing .no { color: var(--accent-dark); font-weight: 700; }
+.ing .op { color: var(--muted); }
+.ing .op::before { content: "[~] "; font-family: var(--pixel); }
+.steps { margin: 0 0 14px; padding-left: 1.4em; }
+.steps li { margin: 0 0 8px; }
+.note { font-size: 14px; color: var(--muted); }
+.btnrow { display: flex; justify-content: flex-end; gap: 10px; }
+
+footer { max-width: 900px; margin: 0 auto; padding: 0 16px 44px; font-size: 14px; color: var(--muted); }
+footer a { color: var(--ink); }
+
+@media (max-width: 600px) {
+  .sheet > .inner { padding: 20px 16px 22px; }
+  h1 { font-size: 28px; }
+  .filters { grid-template-columns: 1fr; }
+  .ing { columns: 1; }
+  .cards { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<header>
+  <span class="logo">
+    <svg viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path fill="#3b2f2a" d="M2 0h6v1H2zM1 1h1v9H1zM8 1h1v9H8zM2 4h6v1H2zM2 9h6v1H2z"/><path fill="#c8553d" d="M3 2h1v1H3zM3 6h1v2H3z"/></svg>
+    fridgecook
+  </span>
+  <span class="spacer"></span>
+  <button type="button" class="link" id="aboutBtn">About</button>
+</header>
+
+<main>
+  <div class="lift"><div class="sheet px"><div class="inner px">
+    <h1>What can I cook?</h1>
+    <p class="lede">Tick what's in your kitchen. See what you can make right now, and what needs just one more thing from the shop.</p>
+    <div class="tools">
+      <input class="search" id="search" type="search" placeholder="Find an ingredient, e.g. paneer" aria-label="Find an ingredient">
+      <span class="count" id="count" aria-live="polite"></span>
+      <button type="button" class="btn px" id="clearBtn"><span class="px">Clear all</span></button>
+    </div>
+    <div id="shelves"></div>
+    <div class="filters">
+      <div>
+        <span class="lab" id="dietLab">Food</span>
+        <div class="seg" id="diet" role="group" aria-labelledby="dietLab">
+          <button type="button" data-v="all">Everything</button>
+          <button type="button" data-v="veg">Veg</button>
+          <button type="button" data-v="egg">Veg + egg</button>
+          <button type="button" data-v="jain">Jain</button>
+        </div>
+      </div>
+      <div>
+        <span class="lab" id="timeLab">Time</span>
+        <div class="seg" id="time" role="group" aria-labelledby="timeLab">
+          <button type="button" data-v="0">Any</button>
+          <button type="button" data-v="15">15 min</button>
+          <button type="button" data-v="30">30 min</button>
+          <button type="button" data-v="45">45 min</button>
+        </div>
+      </div>
+    </div>
+    <p class="assumed">Salt, oil, water and everyday spices (turmeric, chilli powder, cumin, mustard seeds, garam masala) are assumed.</p>
+  </div></div></div>
+
+  <div class="lift"><div class="sheet px"><div class="inner px" id="results" aria-live="polite">
+    <h2>You can make</h2>
+    <p class="empty" id="empty">Tick a few things above and dishes will show up here.</p>
+    <p class="buy" id="buy"></p>
+    <section class="band" id="bandNow" hidden><h3>Right now <small id="nNow"></small></h3><div class="cards" id="now"></div></section>
+    <section class="band" id="bandOne" hidden><h3>With 1 more thing <small id="nOne"></small></h3><div class="cards" id="one"></div></section>
+    <section class="band" id="bandTwo" hidden><h3>With 2 more things <small id="nTwo"></small></h3><div class="cards" id="two"></div></section>
+  </div></div></div>
+</main>
+
+<footer>About a hundred dishes, written for this site. <a href="https://mridulsaravanan.com/#/projects">More projects</a></footer>
+
+<dialog id="recipe" aria-labelledby="rName">
+  <div class="inner px">
+    <h2 id="rName"></h2>
+    <p class="meta" id="rMeta"></p>
+    <ul class="ing" id="rIng"></ul>
+    <ol class="steps" id="rSteps"></ol>
+    <p class="note" id="rNote"></p>
+    <div class="btnrow"><button type="button" class="btn px" id="rClose"><span class="px">Close</span></button></div>
+  </div>
+</dialog>
+
+<dialog id="about" aria-labelledby="aboutTitle">
+  <div class="inner px">
+    <h2 id="aboutTitle">About fridgecook</h2>
+    <p>Tick what you have and fridgecook shows dishes you can cook right now, plus those that need one or two more things. It also tells you which single item would unlock the most dishes.</p>
+    <p>About a hundred Indian and everyday dishes, each with short steps. Filters for veg, veg with eggs, and Jain (no onion, garlic or root vegetables).</p>
+    <p>What you tick is remembered on this device, so next time you only change what's new.</p>
+    <p>Font: Pixelify Sans (SIL Open Font License). One of the projects at <a href="https://mridulsaravanan.com/#/projects">mridulsaravanan.com</a>.</p>
+    <div class="btnrow"><button type="button" class="btn px" id="aboutOk"><span class="px">OK</span></button></div>
+  </div>
+</dialog>
+
+<script src="dishes.js"></script>
+<script src="engine.js"></script>
+<script>
+(function () {
+  'use strict';
+  var F = window.FridgeCook;
+  var $ = function (id) { return document.getElementById(id); };
+  var KEY = 'fridgecook.v1';
+  var state = { have: [], diet: 'all', time: 0 };
+  try {
+    var s = JSON.parse(localStorage.getItem(KEY) || '{}');
+    if (Array.isArray(s.have)) state.have = s.have.filter(function (x) { return F.KNOWN[x]; });
+    if (/^(all|veg|egg|jain)$/.test(s.diet)) state.diet = s.diet;
+    if ([0, 15, 30, 45].indexOf(s.time) >= 0) state.time = s.time;
+  } catch (e) { /* defaults */ }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* ignore */ } }
+  var LIMIT = 9, showAll = { now: false, one: false, two: false }, last = null;
+
+  // Shelves of ingredient chips
+  F.CATALOG.forEach(function (g) {
+    var sec = document.createElement('div'); sec.className = 'shelf';
+    var h = document.createElement('h3'); h.textContent = g[0]; sec.appendChild(h);
+    var c = document.createElement('div'); c.className = 'chips';
+    g[1].forEach(function (x) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'chip'; b.textContent = x; b.setAttribute('data-x', x);
+      c.appendChild(b);
+    });
+    sec.appendChild(c); $('shelves').appendChild(sec);
+  });
+  $('shelves').addEventListener('click', function (e) {
+    var b = e.target.closest('.chip'); if (!b) return;
+    var x = b.getAttribute('data-x'), i = state.have.indexOf(x);
+    if (i >= 0) state.have.splice(i, 1); else state.have.push(x);
+    save(); render();
+  });
+  $('search').addEventListener('input', function () {
+    var q = this.value.trim().toLowerCase();
+    Array.prototype.forEach.call(document.querySelectorAll('#shelves .shelf'), function (sec) {
+      var any = false;
+      Array.prototype.forEach.call(sec.querySelectorAll('.chip'), function (b) {
+        var hit = !q || b.getAttribute('data-x').indexOf(q) >= 0;
+        b.hidden = !hit; if (hit) any = true;
+      });
+      sec.hidden = !any;
+    });
+  });
+  $('clearBtn').addEventListener('click', function () { state.have = []; save(); render(); });
+  function seg(id, key, num) {
+    $(id).addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      state[key] = num ? +b.getAttribute('data-v') : b.getAttribute('data-v'); save(); render();
+    });
+  }
+  seg('diet', 'diet', false); seg('time', 'time', true);
+
+  function card(m) {
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'card px'; b.setAttribute('data-id', m.id);
+    var s = document.createElement('span'); s.className = 'px';
+    var nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = m.dish.name; s.appendChild(nm);
+    var meta = document.createElement('span'); meta.className = 'meta';
+    meta.innerHTML = '<span>' + m.dish.mins + ' min</span>';
+    var t = document.createElement('span'); t.className = 'tag ' + m.diet; t.textContent = m.diet === 'nonveg' ? 'non-veg' : m.diet === 'egg' ? 'egg' : 'veg'; meta.appendChild(t);
+    if (m.dish.cuisine !== 'Indian') { var c = document.createElement('span'); c.className = 'tag'; c.textContent = m.dish.cuisine; meta.appendChild(c); }
+    s.appendChild(meta);
+    if (m.missing.length) { var mi = document.createElement('span'); mi.className = 'miss'; mi.textContent = 'Need: ' + m.missing.join(', '); s.appendChild(mi); }
+    var u = document.createElement('span'); u.className = 'use'; u.textContent = 'Uses your ' + m.using.slice(0, 5).join(', ') + (m.using.length > 5 ? '...' : ''); s.appendChild(u);
+    b.appendChild(s);
+    return b;
+  }
+
+  function band(key, list, bandId, countId) {
+    var wrap = $(key); wrap.textContent = '';
+    $(bandId).hidden = list.length === 0;
+    $(countId).textContent = list.length + (list.length === 1 ? ' dish' : ' dishes');
+    var shown = showAll[key] ? list : list.slice(0, LIMIT);
+    shown.forEach(function (m) { wrap.appendChild(card(m)); });
+    if (list.length > shown.length) {
+      var more = document.createElement('button'); more.type = 'button'; more.className = 'btn px more'; more.setAttribute('data-more', key);
+      more.innerHTML = '<span class="px">Show all ' + list.length + '</span>';
+      wrap.appendChild(more);
+    }
+  }
+
+  function render() {
+    Array.prototype.forEach.call(document.querySelectorAll('#shelves .chip'), function (b) {
+      b.setAttribute('aria-pressed', String(state.have.indexOf(b.getAttribute('data-x')) >= 0));
+    });
+    Array.prototype.forEach.call($('diet').children, function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-v') === state.diet)); });
+    Array.prototype.forEach.call($('time').children, function (b) { b.setAttribute('aria-pressed', String(+b.getAttribute('data-v') === state.time)); });
+    $('count').textContent = state.have.length ? state.have.length + ' ticked' : '';
+    last = F.match(state.have, { diet: state.diet, maxMins: state.time });
+    var total = last.now.length + last.one.length + last.two.length;
+    $('empty').hidden = total > 0;
+    $('empty').textContent = state.have.length ? 'Nothing matches yet. Tick a few more things, or loosen the filters.' : 'Tick a few things above and dishes will show up here.';
+    $('buy').textContent = last.bestBuy.length && state.have.length ? 'Going to the shop? ' + last.bestBuy.map(function (b) { return b.item + ' (' + b.dishes + (b.dishes === 1 ? ' dish' : ' dishes') + ')'; }).join(', ') + ' would unlock the most.' : '';
+    band('now', last.now, 'bandNow', 'nNow');
+    band('one', last.one, 'bandOne', 'nOne');
+    band('two', last.two, 'bandTwo', 'nTwo');
+  }
+
+  $('results').addEventListener('click', function (e) {
+    var more = e.target.closest('[data-more]');
+    if (more) { showAll[more.getAttribute('data-more')] = true; render(); return; }
+    var c = e.target.closest('.card'); if (!c) return;
+    var id = +c.getAttribute('data-id');
+    var m = last.now.concat(last.one, last.two).filter(function (x) { return x.id === id; })[0];
+    if (m) openRecipe(m);
+  });
+
+  function openRecipe(m) {
+    var d = m.dish, H = {};
+    state.have.forEach(function (x) { H[x] = 1; });
+    if (H.rice) H['cooked rice'] = 1;
+    $('rName').textContent = d.name;
+    $('rMeta').textContent = d.mins + ' minutes - ' + (m.diet === 'nonveg' ? 'non-veg' : m.diet === 'egg' ? 'egg' : 'veg') + (d.cuisine !== 'Indian' ? ' - ' + d.cuisine : '');
+    var ul = $('rIng'); ul.textContent = '';
+    d.needs.forEach(function (x) { var li = document.createElement('li'); li.className = H[x] ? 'ok' : 'no'; li.textContent = x + (H[x] ? '' : ' (need)'); ul.appendChild(li); });
+    d.opt.forEach(function (x) { var li = document.createElement('li'); li.className = 'op'; li.textContent = x + ' (optional)'; ul.appendChild(li); });
+    var ol = $('rSteps'); ol.textContent = '';
+    d.steps.forEach(function (s) { var li = document.createElement('li'); li.textContent = s; ol.appendChild(li); });
+    var notes = [];
+    if (d.needs.indexOf('cooked rice') >= 0 && !state.have.includes('cooked rice')) notes.push('Leftover rice works best; fresh rice should be cooled first.');
+    if (m.jainSkip && m.jainSkip.length) notes.push('For Jain cooking, leave out: ' + m.jainSkip.join(', ') + '.');
+    notes.push('Season to taste. Times are a rough guide.');
+    $('rNote').textContent = notes.join(' ');
+    $('recipe').showModal();
+  }
+  $('rClose').addEventListener('click', function () { $('recipe').close(); });
+  $('aboutBtn').addEventListener('click', function () { $('about').showModal(); });
+  $('aboutOk').addEventListener('click', function () { $('about').close(); });
+  [$('recipe'), $('about')].forEach(function (dlg) { dlg.addEventListener('click', function (e) { if (e.target === dlg) dlg.close(); }); });
+
+  render();
+})();
+</script>
+</body>
+</html>
